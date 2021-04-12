@@ -108,7 +108,7 @@ esp_err_t example_disconnect(void)
     return ESP_OK;
 }
 
-#ifdef CONFIG_EXAMPLE_CONNECT_WIFI
+
 
 static void on_wifi_disconnect(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
@@ -133,6 +133,18 @@ static void on_wifi_connect(void *esp_netif, esp_event_base_t event_base,
 
 static void start(void)
 {
+
+    wifi_config_t ap_config;
+
+    memset(&ap_config, 0, sizeof(wifi_config_t));
+    strncpy((char *)ap_config.ap.ssid,"AP_SSID",8);
+    strncpy((char *)ap_config.ap.password, "AP_PASSWORD", 12);
+    ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
+    ap_config.ap.ssid_len = 0;
+    ap_config.ap.max_connection = 4;
+    ap_config.ap.channel = 3;
+
+    
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -157,16 +169,19 @@ static void start(void)
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = CONFIG_EXAMPLE_WIFI_SSID,
-            .password = CONFIG_EXAMPLE_WIFI_PASSWORD,
+            .ssid = "ALFA_AP",
+            .password = "liv3fr33ordi3hard",
         },
     };
     ESP_LOGI(TAG, "Connecting to %s...", wifi_config.sta.ssid);
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+
+
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_ERROR_CHECK(esp_wifi_connect());
-    s_connection_name = CONFIG_EXAMPLE_WIFI_SSID;
+    s_connection_name = "ALFA_AP";
 }
 
 static void stop(void)
@@ -187,7 +202,7 @@ static void stop(void)
     esp_netif_destroy(s_example_esp_netif);
     s_example_esp_netif = NULL;
 }
-#endif // CONFIG_EXAMPLE_CONNECT_WIFI
+
 
 #ifdef CONFIG_EXAMPLE_CONNECT_ETHERNET
 

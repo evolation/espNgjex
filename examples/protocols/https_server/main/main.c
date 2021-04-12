@@ -34,11 +34,27 @@ static esp_err_t root_get_handler(httpd_req_t *req)
 
     return ESP_OK;
 }
+/* An HTTP POST handler */
+static esp_err_t blink_post_handler(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, "<h1>Gjergji</h1>", -1); // -1 = use strlen()
 
+    ESP_LOGW("REQUEST", "Gjerji_warning to blink");
+
+    return ESP_OK;
+}
 static const httpd_uri_t root = {
     .uri       = "/",
     .method    = HTTP_GET,
-    .handler   = root_get_handler
+    .handler   = blink_post_handler
+};
+
+
+static const httpd_uri_t blink = {
+    .uri       = "/blink",
+    .method    = HTTP_POST,
+    .handler   = blink_post_handler
 };
 
 
@@ -70,6 +86,7 @@ static httpd_handle_t start_webserver(void)
     // Set URI handlers
     ESP_LOGI(TAG, "Registering URI handlers");
     httpd_register_uri_handler(server, &root);
+    httpd_register_uri_handler(server, &blink);
     return server;
 }
 
@@ -105,23 +122,9 @@ void app_main(void)
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    /* Register event handlers to start server when Wi-Fi or Ethernet is connected,
-     * and stop server when disconnection happens.
-     */
-
-#ifdef CONFIG_EXAMPLE_CONNECT_WIFI
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
-#endif // CONFIG_EXAMPLE_CONNECT_WIFI
-#ifdef CONFIG_EXAMPLE_CONNECT_ETHERNET
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &connect_handler, &server));
-    ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_DISCONNECTED, &disconnect_handler, &server));
-#endif // CONFIG_EXAMPLE_CONNECT_ETHERNET
+    esp_netif_create_default_wifi_ap();
 
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
     ESP_ERROR_CHECK(example_connect());
 }
